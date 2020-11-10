@@ -322,16 +322,16 @@ func (p *ironicProvisioner) ValidateManagementAccess(credentialsChanged bool) (r
 
 		updates := nodes.UpdateOpts{}
 		if p.host.Spec.Image.ISO != "" {
-				updates = append(updates, nodes.UpdateOperation{
-					Op:    nodes.AddOp,
-					Path:  "/instance_info/boot_iso",
-					Value: p.host.Spec.Image.ISO,
-				})
-				updates = append(updates, nodes.UpdateOperation{
-					Op:    nodes.ReplaceOp,
-					Path:  "/deploy_interface",
-					Value: "ramdisk",
-				})
+			updates = append(updates, nodes.UpdateOperation{
+				Op:    nodes.AddOp,
+				Path:  "/instance_info/boot_iso",
+				Value: p.host.Spec.Image.ISO,
+			})
+			updates = append(updates, nodes.UpdateOperation{
+				Op:    nodes.ReplaceOp,
+				Path:  "/deploy_interface",
+				Value: "ramdisk",
+			})
 		} else {
 			checksum, checksumType, ok := p.host.GetImageChecksum()
 			if ok {
@@ -340,7 +340,7 @@ func (p *ironicProvisioner) ValidateManagementAccess(credentialsChanged bool) (r
 					"image_os_hash_value", checksum,
 					"image_os_hash_algo", checksumType,
 				)
-	
+
 				updates = append(updates, nodes.UpdateOperation{
 					Op:    nodes.ReplaceOp,
 					Path:  "/deploy_interface",
@@ -385,7 +385,7 @@ func (p *ironicProvisioner) ValidateManagementAccess(credentialsChanged bool) (r
 						},
 					)
 				}
-	
+
 				if p.host.Spec.Image.DiskFormat != nil {
 					updates = append(updates, nodes.UpdateOperation{
 						Op:    nodes.AddOp,
