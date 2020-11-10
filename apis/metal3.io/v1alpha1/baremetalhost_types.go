@@ -306,7 +306,12 @@ const (
 // has been provisioned.
 type Image struct {
 	// URL is a location of an image to deploy.
-	URL string `json:"url"`
+	URL string `json:"url,omitempty"`
+
+	// ISO is a location of an ISO image to boot
+	// either URL or ISO may be specified
+	// currently checksum is not required with ISO
+	ISO string `json:"iso,omitempty"`
 
 	// Checksum is the checksum for the image.
 	Checksum string `json:"checksum"`

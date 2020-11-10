@@ -320,76 +320,91 @@ func (p *ironicProvisioner) ValidateManagementAccess(credentialsChanged bool) (r
 			}
 		}
 
-		checksum, checksumType, ok := p.host.GetImageChecksum()
+		updates := nodes.UpdateOpts{}
+		if p.host.Spec.Image.ISO != "" {
+			updates = append(updates, nodes.UpdateOperation{
+				Op:    nodes.AddOp,
+				Path:  "/instance_info/boot_iso",
+				Value: p.host.Spec.Image.ISO,
+			})
+			updates = append(updates, nodes.UpdateOperation{
+				Op:    nodes.ReplaceOp,
+				Path:  "/deploy_interface",
+				Value: "ramdisk",
+			})
+		} else {
+			checksum, checksumType, ok := p.host.GetImageChecksum()
+			if ok {
+				p.log.Info("setting instance info",
+					"image_source", p.host.Spec.Image.URL,
+					"image_os_hash_value", checksum,
+					"image_os_hash_algo", checksumType,
+				)
 
-		if ok {
-			p.log.Info("setting instance info",
-				"image_source", p.host.Spec.Image.URL,
-				"image_os_hash_value", checksum,
-				"image_os_hash_algo", checksumType,
-			)
-
-			updates := nodes.UpdateOpts{
-				nodes.UpdateOperation{
+				updates = append(updates, nodes.UpdateOperation{
+					Op:    nodes.ReplaceOp,
+					Path:  "/deploy_interface",
+					Value: "direct",
+				})
+				updates = append(updates, nodes.UpdateOperation{
 					Op:    nodes.AddOp,
 					Path:  "/instance_info/image_source",
 					Value: p.host.Spec.Image.URL,
-				},
-				nodes.UpdateOperation{
+				})
+				updates = append(updates, nodes.UpdateOperation{
 					Op:    nodes.AddOp,
 					Path:  "/instance_info/image_os_hash_value",
 					Value: checksum,
-				},
-				nodes.UpdateOperation{
+				})
+				updates = append(updates, nodes.UpdateOperation{
 					Op:    nodes.AddOp,
 					Path:  "/instance_info/image_os_hash_algo",
 					Value: checksumType,
-				},
-				nodes.UpdateOperation{
+				})
+				updates = append(updates, nodes.UpdateOperation{
 					Op:    nodes.ReplaceOp,
 					Path:  "/instance_uuid",
 					Value: string(p.host.ObjectMeta.UID),
-				},
-			}
-
-			// image_checksum
-			//
-			// FIXME: For older versions of ironic that do not have
-			// https://review.opendev.org/#/c/711816/ failing to
-			// include the 'image_checksum' causes ironic to refuse to
-			// provision the image, even if the other hash value
-			// parameters are given. We only want to do that for MD5,
-			// however, because those versions of ironic only support
-			// MD5 checksums.
-			if checksumType == string(metal3v1alpha1.MD5) {
-				updates = append(
-					updates,
-					nodes.UpdateOperation{
-						Op:    nodes.AddOp,
-						Path:  "/instance_info/image_checksum",
-						Value: checksum,
-					},
-				)
-			}
-
-			if p.host.Spec.Image.DiskFormat != nil {
-				updates = append(updates, nodes.UpdateOperation{
-					Op:    nodes.AddOp,
-					Path:  "/instance_info/image_disk_format",
-					Value: *p.host.Spec.Image.DiskFormat,
 				})
+				// image_checksum
+				//
+				// FIXME: For older versions of ironic that do not have
+				// https://review.opendev.org/#/c/711816/ failing to
+				// include the 'image_checksum' causes ironic to refuse to
+				// provision the image, even if the other hash value
+				// parameters are given. We only want to do that for MD5,
+				// however, because those versions of ironic only support
+				// MD5 checksums.
+				if checksumType == string(metal3v1alpha1.MD5) {
+					updates = append(
+						updates,
+						nodes.UpdateOperation{
+							Op:    nodes.AddOp,
+							Path:  "/instance_info/image_checksum",
+							Value: checksum,
+						},
+					)
+				}
+
+				if p.host.Spec.Image.DiskFormat != nil {
+					updates = append(updates, nodes.UpdateOperation{
+						Op:    nodes.AddOp,
+						Path:  "/instance_info/image_disk_format",
+						Value: *p.host.Spec.Image.DiskFormat,
+					})
+				}
 			}
-			_, err = nodes.Update(p.client, ironicNode.UUID, updates).Extract()
-			switch err.(type) {
-			case nil:
-			case gophercloud.ErrDefault409:
-				p.log.Info("could not update host settings in ironic, busy")
-				result.Dirty = true
-				result.RequeueAfter = provisionRequeueDelay
-				return result, nil
-			default:
-				return result, errors.Wrap(err, "failed to update host settings in ironic")
-			}
+		}
+		_, err = nodes.Update(p.client, ironicNode.UUID, updates).Extract()
+		switch err.(type) {
+		case nil:
+		case gophercloud.ErrDefault409:
+			p.log.Info("could not update host settings in ironic, busy")
+			result.Dirty = true
+			result.RequeueAfter = provisionRequeueDelay
+			return result, nil
+		default:
+			return result, errors.Wrap(err, "failed to update host settings in ironic")
 		}
 	} else {
 		// FIXME(dhellmann): At this point we have found an existing
