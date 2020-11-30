@@ -264,6 +264,9 @@ type BareMetalHostSpec struct {
 	// Image holds the details of the image to be provisioned.
 	Image *Image `json:"image,omitempty"`
 
+	// LiveImage holds the details of the live image to be provisioned.
+	LiveImage *LiveImage `json:"liveImage,omitempty"`
+
 	// UserData holds the reference to the Secret containing the user
 	// data to be passed to the host before it boots.
 	UserData *corev1.SecretReference `json:"userData,omitempty"`
@@ -306,12 +309,7 @@ const (
 // has been provisioned.
 type Image struct {
 	// URL is a location of an image to deploy.
-	URL string `json:"url,omitempty"`
-
-	// ISO is a location of an ISO image to boot
-	// either URL or ISO may be specified
-	// currently checksum is not required with ISO
-	ISO string `json:"iso,omitempty"`
+	URL string `json:"url"`
 
 	// Checksum is the checksum for the image.
 	Checksum string `json:"checksum"`
@@ -324,6 +322,13 @@ type Image struct {
 	// Needs to be set to raw for raw images streaming
 	// +kubebuilder:validation:Enum=raw;qcow2;vdi;vmdk
 	DiskFormat *string `json:"format,omitempty"`
+}
+
+// LiveImage holds the details of a live image either to be provisioned or that
+// has been provisioned.
+type LiveImage struct {
+	// URL is a location of a live image to deploy.
+	URL string `json:"url,omitempty"`
 }
 
 // FIXME(dhellmann): We probably want some other module to own these

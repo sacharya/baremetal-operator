@@ -321,11 +321,11 @@ func (p *ironicProvisioner) ValidateManagementAccess(credentialsChanged bool) (r
 		}
 
 		updates := nodes.UpdateOpts{}
-		if p.host.Spec.Image.ISO != "" {
+		if p.host.Spec.LiveImage.URL != "" {
 			updates = append(updates, nodes.UpdateOperation{
 				Op:    nodes.AddOp,
 				Path:  "/instance_info/boot_iso",
-				Value: p.host.Spec.Image.ISO,
+				Value: p.host.Spec.LiveImage.URL,
 			})
 			updates = append(updates, nodes.UpdateOperation{
 				Op:    nodes.ReplaceOp,

@@ -143,14 +143,19 @@ spec:
                     - vdi
                     - vmdk
                     type: string
-                  iso:
-                    description: ISO is a location of an ISO image to boot either URL or ISO may be specified currently checksum is not required with ISO
-                    type: string
                   url:
                     description: URL is a location of an image to deploy.
                     type: string
                 required:
                 - checksum
+                - url
+                type: object
+              liveImage:
+                description: LiveImage holds the details of the live image to be provisioned.
+                properties:
+                  url:
+                    description: URL is a location of a live image to deploy.
+                    type: string
                 type: object
               metaData:
                 description: MetaData holds the reference to the Secret containing host metadata (e.g. meta_data.json which is passed to Config Drive).
@@ -556,14 +561,12 @@ spec:
                         - vdi
                         - vmdk
                         type: string
-                      iso:
-                        description: ISO is a location of an ISO image to boot either URL or ISO may be specified currently checksum is not required with ISO
-                        type: string
                       url:
                         description: URL is a location of an image to deploy.
                         type: string
                     required:
                     - checksum
+                    - url
                     type: object
                   rootDeviceHints:
                     description: The RootDevicehints set by the user
