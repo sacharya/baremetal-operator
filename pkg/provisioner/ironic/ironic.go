@@ -319,9 +319,9 @@ func (p *ironicProvisioner) ValidateManagementAccess(credentialsChanged bool) (r
 				return result, errors.Wrap(err, "failed to create port in ironic")
 			}
 		}
-
 		updates := nodes.UpdateOpts{}
-		if p.host.Spec.LiveImage.URL != "" {
+		if p.host.Spec.LiveImage != nil && p.host.Spec.LiveImage.URL != "" {
+			p.log.Info("setting instance info", "boot_iso", p.host.Spec.LiveImage.URL)
 			updates = append(updates, nodes.UpdateOperation{
 				Op:    nodes.AddOp,
 				Path:  "/instance_info/boot_iso",
